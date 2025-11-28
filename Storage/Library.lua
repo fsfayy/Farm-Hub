@@ -25,7 +25,7 @@ local ColorPalette = {
     Gray = Color3.fromRGB(185, 185, 185),
     DarkGray = Color3.fromRGB(50, 50, 50),
     White = Color3.fromRGB(255, 255, 255),
-    Primary = Color3.fromRGB(232, 2, 37)
+    Primary = Color3.fromRGB(87, 166, 199)
 }
 
 -- Storage
@@ -392,7 +392,7 @@ function HorizonBarLibrary:CreateWindow(WindowProperties)
         {
             Parent = WindowGradientFolder,
             Color = ColorSequence.new {
-                ColorSequenceKeypoint.new(0.00, Color3.fromRGB(232, 2, 37)),
+                ColorSequenceKeypoint.new(0.00, Color3.fromRGB(87, 166, 199)),
                 ColorSequenceKeypoint.new(1.00, Color3.fromRGB(25, 24, 24))
             },
             Rotation = -60,
@@ -409,7 +409,7 @@ function HorizonBarLibrary:CreateWindow(WindowProperties)
         {
             Parent = WindowGradientFolder,
             Color = ColorSequence.new {
-                ColorSequenceKeypoint.new(0.00, Color3.fromRGB(232, 2, 37)),
+                ColorSequenceKeypoint.new(0.00, Color3.fromRGB(87, 166, 199)),
                 ColorSequenceKeypoint.new(1.00, Color3.fromRGB(25, 24, 24))
             },
             Rotation = -120,
@@ -2085,7 +2085,7 @@ function HorizonBarLibrary:CreateWindow(WindowProperties)
         function Miscellaneous:CreateToggle(ToggleProperties)
             -- Toggle Properties
             local Toggle_Name = ToggleProperties.Name
-            local Toggle_Value = ToggleProperties.Value
+            local Toggle_Value = ToggleProperties.Toggle_Value
 
             -- Toggle
             local Toggle =
@@ -2321,298 +2321,129 @@ function HorizonBarLibrary:CreateWindow(WindowProperties)
             )
         end
 
-        -- Create Miscellaneous Slider Function
-        function Miscellaneous:CreateSlider(SliderProperties)
-            -- Slider Properties
-            local Slider_Name = SliderProperties.Name
-            local Slider_Max = SliderProperties.Max
-            local Slider_Min = SliderProperties.Min
-            local Slider_Increment = SliderProperties.Increment
-            local Slider_DecimalPrecision = SliderProperties.DecimalPrecision
-            local Slider_CurrentValue = SliderProperties.CurrentValue
+        function Miscellaneous:CreateSlider(Properties)
+            local Name        = Properties.Name
+            local Min         = Properties.Min
+            local Max         = Properties.Max
+            local Increment   = Properties.Increment or 1
+            local Decimals    = Properties.DecimalPrecision or 0
+            local Value       = tonumber(Properties.CurrentValue) or Min
+            local Callback    = Properties.Callback or function() end
 
-            -- Slider
-            local Slider =
-                Create(
-                "Frame",
-                {
-                    Parent = MiscellaneousContainer,
-                    Name = "Slider",
-                    AnchorPoint = Vector2.new(0, 0),
-                    AutomaticSize = Enum.AutomaticSize.None,
-                    BackgroundColor3 = ColorPalette.White,
-                    BackgroundTransparency = 1,
-                    BorderColor3 = ColorPalette.Black,
-                    BorderSizePixel = 0,
-                    Position = UDim2.new(0, 0, 0, 0),
-                    Rotation = 0,
-                    Size = UDim2.new(1, 0, 0, 34),
-                    Visible = true,
-                    ClipsDescendants = false
-                }
-            )
+            local Slider = Create("Frame", {
+                Parent = MiscellaneousContainer,
+                Size = UDim2.new(1, 0, 0, 34),
+                BackgroundTransparency = 1,
+            })
 
-            -- Slider UICorner
-            local Slider_UICorner =
-                Create(
-                "UICorner",
-                {
-                    Parent = Slider,
-                    CornerRadius = UDim.new(0, 6)
-                }
-            )
+            Create("UICorner", { Parent = Slider, CornerRadius = UDim.new(0, 6) })
 
-            -- Slider Interact
-            local SliderInteract =
-                Create(
-                "TextButton",
-                {
-                    Parent = Slider,
-                    Name = "Interact",
-                    AnchorPoint = Vector2.new(0, 0),
-                    AutomaticSize = Enum.AutomaticSize.None,
-                    BackgroundColor3 = ColorPalette.White,
-                    BackgroundTransparency = 1,
-                    BorderColor3 = ColorPalette.Black,
-                    BorderSizePixel = 0,
-                    Position = UDim2.new(0, 0, 0, 0),
-                    Rotation = 0,
-                    Size = UDim2.new(1, 0, 1, 0),
-                    Visible = true,
-                    ClipsDescendants = false,
-                    FontFace = Font.new("rbxasset://fonts/families/Montserrat.json", Enum.FontWeight.SemiBold),
-                    Text = "",
-                    TextColor3 = ColorPalette.Black,
-                    TextSize = 0,
-                    TextStrokeColor3 = ColorPalette.Black,
-                    TextStrokeTransparency = 1,
-                    TextTransparency = 0,
-                    TextTruncate = Enum.TextTruncate.None,
-                    TextWrapped = false,
-                    TextXAlignment = Enum.TextXAlignment.Center,
-                    TextYAlignment = Enum.TextYAlignment.Center
-                }
-            )
+            local Label = Create("TextLabel", {
+                Parent = Slider,
+                Size = UDim2.new(1, -120, 1, 0),
+                BackgroundTransparency = 1,
+                Text = Name,
+                TextColor3 = ColorPalette.White,
+                TextSize = 13,
+                FontFace = Font.new("rbxasset://fonts/families/Montserrat.json", Enum.FontWeight.SemiBold),
+                TextXAlignment = Enum.TextXAlignment.Left
+            })
 
-            -- Slider Text
-            local SliderText =
-                Create(
-                "TextLabel",
-                {
-                    Parent = Slider,
-                    Name = "Text",
-                    AnchorPoint = Vector2.new(0, 0),
-                    AutomaticSize = Enum.AutomaticSize.None,
-                    BackgroundColor3 = ColorPalette.White,
-                    BackgroundTransparency = 1,
-                    BorderColor3 = ColorPalette.Black,
-                    BorderSizePixel = 0,
-                    Position = UDim2.new(0, 0, 0, 0),
-                    Rotation = 0,
-                    Size = UDim2.new(1, -120, 1, 0),
-                    Visible = true,
-                    ClipsDescendants = false,
-                    FontFace = Font.new("rbxasset://fonts/families/Montserrat.json", Enum.FontWeight.SemiBold),
-                    Text = Slider_Name,
-                    TextColor3 = ColorPalette.White,
-                    TextSize = 13,
-                    TextStrokeColor3 = ColorPalette.Black,
-                    TextStrokeTransparency = 1,
-                    TextTransparency = 0,
-                    TextTruncate = Enum.TextTruncate.AtEnd,
-                    TextWrapped = false,
-                    TextXAlignment = Enum.TextXAlignment.Left,
-                    TextYAlignment = Enum.TextYAlignment.Center
-                }
-            )
+            local Track = Create("Frame", {
+                Parent = Slider,
+                Position = UDim2.new(1, -120, 0, 6),
+                Size     = UDim2.new(0, 120, 0, 22),
+                BackgroundColor3 = ColorPalette.Black,
+                BackgroundTransparency = 0.6,
+            })
 
-            -- Slider Container
-            local SliderContainer =
-                Create(
-                "Frame",
-                {
-                    Parent = Slider,
-                    Name = "SliderContainer",
-                    AnchorPoint = Vector2.new(0, 0),
-                    AutomaticSize = Enum.AutomaticSize.None,
-                    BackgroundColor3 = ColorPalette.Black,
-                    BackgroundTransparency = 0.60,
-                    BorderColor3 = ColorPalette.Black,
-                    BorderSizePixel = 0,
-                    Position = UDim2.new(1, -120, 0, 6),
-                    Rotation = 0,
-                    Size = UDim2.new(0, 120, 0, 22),
-                    Visible = true,
-                    ClipsDescendants = false
-                }
-            )
+            Create("UICorner", { Parent = Track, CornerRadius = UDim.new(0, 6) })
 
-            -- Slider Container UICorner
-            local SliderContainer_UICorner =
-                Create(
-                "UICorner",
-                {
-                    Parent = SliderContainer,
-                    CornerRadius = UDim.new(0, 6)
-                }
-            )
+            local Fill = Create("Frame", {
+                Parent = Track,
+                Size = UDim2.new(0, 0, 1, 0),
+                BackgroundColor3 = ColorPalette.Primary
+            })
 
-            -- Slider Progress
-            local SliderProgress =
-                Create(
-                "Frame",
-                {
-                    Parent = SliderContainer,
-                    Name = "SliderProgress",
-                    AnchorPoint = Vector2.new(0, 0),
-                    AutomaticSize = Enum.AutomaticSize.None,
-                    BackgroundColor3 = ColorPalette.Primary,
-                    BackgroundTransparency = 0,
-                    BorderColor3 = ColorPalette.Black,
-                    BorderSizePixel = 0,
-                    Position = UDim2.new(0, 0, 0, 0),
-                    Rotation = 0,
-                    Size = UDim2.new(0.8, 0, 1, 0),
-                    Visible = true,
-                    ClipsDescendants = false
-                }
-            )
+            Create("UICorner", { Parent = Fill, CornerRadius = UDim.new(0, 6) })
 
-            -- Slider Progress UICorner
-            local SliderProgress_UICorner =
-                Create(
-                "UICorner",
-                {
-                    Parent = SliderProgress,
-                    CornerRadius = UDim.new(0, 6)
-                }
-            )
+            local ValueText = Create("TextLabel", {
+                Parent = Track,
+                Size = UDim2.new(1, 0, 1, 0),
+                BackgroundTransparency = 1,
+                Text = tostring(Value),
+                TextColor3 = ColorPalette.White,
+                TextSize = 13,
+                FontFace = Font.new("rbxasset://fonts/families/Montserrat.json", Enum.FontWeight.SemiBold),
+                TextXAlignment = Enum.TextXAlignment.Center,
+            })
 
-            -- Slider Container Text
-            local SliderContainerText =
-                Create(
-                "TextLabel",
-                {
-                    Parent = SliderContainer,
-                    Name = "Text",
-                    AnchorPoint = Vector2.new(0, 0),
-                    AutomaticSize = Enum.AutomaticSize.None,
-                    BackgroundColor3 = ColorPalette.White,
-                    BackgroundTransparency = 1,
-                    BorderColor3 = ColorPalette.Black,
-                    BorderSizePixel = 0,
-                    Position = UDim2.new(0, 0, 0, 0),
-                    Rotation = 0,
-                    Size = UDim2.new(1, 0, 1, 0),
-                    Visible = true,
-                    ClipsDescendants = false,
-                    FontFace = Font.new("rbxasset://fonts/families/Montserrat.json", Enum.FontWeight.SemiBold),
-                    Text = Slider_CurrentValue,
-                    TextColor3 = ColorPalette.White,
-                    TextSize = 13,
-                    TextStrokeColor3 = ColorPalette.Black,
-                    TextStrokeTransparency = 1,
-                    TextTransparency = 0,
-                    TextTruncate = Enum.TextTruncate.None,
-                    TextWrapped = false,
-                    TextXAlignment = Enum.TextXAlignment.Center,
-                    TextYAlignment = Enum.TextYAlignment.Center
-                }
-            )
+            local Interact = Create("TextButton", {
+                Parent = Slider,
+                Size = UDim2.new(1, 0, 1, 0),
+                Text = "",
+                BackgroundTransparency = 1
+            })
 
-            local Slider_Dragging = false
+            local dragging = false
 
-            -- Slider Input Began
-            -- use the button's MouseButton1Down to start dragging (more reliable than scanning global input)
-            SliderInteract.MouseButton1Down:Connect(
-                function()
-                    Slider_Dragging = true
-                    CreateTween(
-                        SliderText,
-                        0.5,
-                        Enum.EasingStyle.Exponential,
-                        {
-                            Position = UDim2.new(-1, 0, 0, 0)
-                        }
-                    )
-                    CreateTween(
-                        SliderContainer,
-                        0.5,
-                        Enum.EasingStyle.Exponential,
-                        {
-                            Position = UDim2.new(0, 0, 0, 6),
-                            Size = UDim2.new(1, 0, 0, 22)
-                        }
-                    )
+            local function SetValueFromPercent(pct)
+                pct = math.clamp(pct, 0, 1)
+
+                -- convert pct → value
+                local range = Max - Min
+                local raw = Min + pct * range
+
+                local rounded = math.floor(raw / Increment + 0.5) * Increment
+                rounded = math.clamp(rounded, Min, Max)
+
+                Value = rounded
+
+                local pctRounded = (Value - Min) / (Max - Min)
+                Fill.Size = UDim2.new(pctRounded, 0, 1, 0)
+
+                ValueText.Text = string.format("%." .. Decimals .. "f", Value)
+                Callback(Value)
+            end
+
+            local function UpdateFromMouse()
+                local mouse = UserInputService:GetMouseLocation().X
+                local pos = Track.AbsolutePosition.X
+                local width = Track.AbsoluteSize.X
+
+                if width <= 0 then return end
+
+                local pct = (mouse - pos) / width
+                SetValueFromPercent(pct)
+            end
+
+            Interact.MouseButton1Down:Connect(function()
+                dragging = true
+
+                CreateTween(Label, 0.4, Enum.EasingStyle.Exponential, { Position = UDim2.new(-1, 0, 0, 0) })
+                CreateTween(Track, 0.4, Enum.EasingStyle.Exponential, { Position = UDim2.new(0, 0, 0, 6), Size = UDim2.new(1, 0, 0, 22) })
+
+                UpdateFromMouse()
+            end)
+
+            UserInputService.InputEnded:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    dragging = false
+
+                    CreateTween(Label, 0.4, Enum.EasingStyle.Exponential, { Position = UDim2.new(0, 0, 0, 0) })
+                    CreateTween(Track, 0.4, Enum.EasingStyle.Exponential, { Position = UDim2.new(1, -120, 0, 6), Size = UDim2.new(0, 120, 0, 22) })
                 end
-            )
+            end)
 
-            -- Slider Input Ended
-            UserInputService.InputEnded:Connect(
-                function(Input, GameProcessed)
-                    if Input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        Slider_Dragging = false
-                        CreateTween(
-                            SliderText,
-                            0.5,
-                            Enum.EasingStyle.Exponential,
-                            {
-                                Position = UDim2.new(0, 0, 0, 0)
-                            }
-                        )
-                        CreateTween(
-                            SliderContainer,
-                            0.5,
-                            Enum.EasingStyle.Exponential,
-                            {
-                                Position = UDim2.new(1, -120, 0, 6),
-                                Size = UDim2.new(0, 120, 0, 22)
-                            }
-                        )
-                    end
+            UserInputService.InputChanged:Connect(function(input)
+                if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+                    UpdateFromMouse()
                 end
-            )
+            end)
 
-            -- Slider Function
-            RunService.RenderStepped:Connect(
-                function()
-                    if Slider_Dragging then
-                        local MousePosition = UserInputService:GetMouseLocation()
-                        local MousePositionX = MousePosition.X
-                        local sizeX = SliderInteract.AbsoluteSize.X or 0
-                        -- guard against zero/invalid sizes
-                        if sizeX > 0 then
-                            local posX = SliderInteract.AbsolutePosition.X
-                            local Value = math.clamp((MousePositionX - posX) / sizeX, 0, 1)
-                            -- ensure increment is valid
-                            local increment = (Slider_Increment and Slider_Increment > 0) and Slider_Increment or 1
-                            local range = (Slider_Max - Slider_Min) or 0
-                            local RoundedValue = math.round(Value * range / increment) * increment + (Slider_Min or 0)
-                            CreateTween(
-                                SliderProgress,
-                                1,
-                                Enum.EasingStyle.Quint,
-                                {
-                                    Size = UDim2.new(Value, 0, 1, 0)
-                                }
-                            )
-                            local precision = tonumber(Slider_DecimalPrecision) or 0
-                            local FinalValue = tostring(string.format("%." .. precision .. "f", RoundedValue))
-                            SliderContainerText.Text = FinalValue
-                            local Success, Error =
-                                pcall(
-                                function()
-                                    SliderProperties.Callback(FinalValue)
-                                end
-                            )
-                            if not Success then
-                                print("[Horizon Bar Error]: " .. Error)
-                            end
-                        end
-                    end
-                end
-            )
+            SetValueFromPercent((Value - Min) / (Max - Min))
         end
+
 
         function Miscellaneous:CreateInput(InputProperties)
             -- Input Properties
