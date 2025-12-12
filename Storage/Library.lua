@@ -3606,6 +3606,761 @@ function HorizonBarLibrary:CreateWindow(WindowProperties)
 
         return User
     end
+
+	_G.NotificationUI = "HorizonNotifications"
+
+local HorizonNotificationUI = Instance.new("ScreenGui")
+local uiparent = (gethui and gethui()) or Players.LocalPlayer.PlayerGui
+HorizonNotificationUI.Name = _G.NotificationUI
+if uiparent:FindFirstChild(_G.NotificationUI) then
+    uiparent:FindFirstChild(_G.NotificationUI).Parent = nil
+end
+
+HorizonNotificationUI.Parent = uiparent
+
+local ColorPalette = {
+    Black = Color3.fromRGB(0, 0, 0),
+    Dark = Color3.fromRGB(25, 25, 25),
+    Gray = Color3.fromRGB(185, 185, 185),
+    DarkGray = Color3.fromRGB(50, 50, 50),
+    White = Color3.fromRGB(255, 255, 255),
+    Primary = Color3.fromRGB(87, 166, 199),
+    Success = Color3.fromRGB(87, 166, 199),
+    Warning = Color3.fromRGB(199, 166, 87),
+    Error = Color3.fromRGB(199, 87, 87),
+    Info = Color3.fromRGB(87, 166, 199)
+}
+
+local Storage = {
+    Icons = {
+        Success = "rbxassetid://11293982222",
+        Warning = "rbxassetid://11293983062",
+        Error = "rbxassetid://11293981855",
+        Info = "rbxassetid://11293981644",
+        Notification = "rbxassetid://11293981392"
+    }
+}
+
+local NotificationConfig = {
+    MaxNotifications = 5,
+    DefaultDuration = 5,
+    AnimationDuration = 0.3,
+    NotificationWidth = 300,
+    NotificationHeight = 80,
+    Padding = 10,
+    Position = "TopRight" 
+}
+
+local ActiveNotifications = {}
+local IsUpdatingPositions = false
+
+local function Create(Object_Type, Object_Properties)
+    local Object = Instance.new(Object_Type)
+    for Property, Value in next, Object_Properties do
+        Object[Property] = Value
+    end
+    return Object
+end
+
+local function CreateTween(Object, Tween_Duration, Tween_Easing_Style, Tween_Properties)
+    local TweenInfo = TweenInfo.new(Tween_Duration, Tween_Easing_Style)
+    local Tween = TweenService:Create(Object, TweenInfo, Tween_Properties)
+    Tween:Play()
+    return Tween
+end
+
+local function Shadow(ShadowProperties)
+    local ShadowFrame =
+        Create(
+        "Frame",
+        {
+            Parent = ShadowProperties.Parent,
+            Name = "ShadowFrame",
+            AnchorPoint = Vector2.new(0, 0),
+            AutomaticSize = Enum.AutomaticSize.None,
+            BackgroundColor3 = ColorPalette.White,
+            BackgroundTransparency = 1,
+            BorderColor3 = ColorPalette.Black,
+            BorderSizePixel = 0,
+            Position = UDim2.new(0, 0, 0, 0),
+            Rotation = 0,
+            Size = UDim2.new(1, 0, 1, 0),
+            Visible = true,
+            ClipsDescendants = false
+        }
+    )
+
+    local ShadowFrame_UICorner =
+        Create(
+        "UICorner",
+        {
+            Parent = ShadowFrame,
+            CornerRadius = UDim.new(0, ShadowProperties.CornerRadius)
+        }
+    )
+
+    local ShadowFrame_UIStroke =
+        Create(
+        "UIStroke",
+        {
+            Parent = ShadowFrame,
+            Color = ColorPalette.Black,
+            Thickness = ShadowProperties.Thickness,
+            Transparency = ShadowProperties.Transparency
+        }
+    )
+end
+
+local function Gradient(GradientProperties)
+    local GradientFrame =
+        Create(
+        "Frame",
+        {
+            Parent = GradientProperties.Parent,
+            Name = "GradientFrame",
+            AnchorPoint = Vector2.new(0, 0),
+            AutomaticSize = Enum.AutomaticSize.None,
+            BackgroundColor3 = ColorPalette.White,
+            BackgroundTransparency = 0,
+            BorderColor3 = ColorPalette.Black,
+            BorderSizePixel = 0,
+            Position = UDim2.new(0, 0, 0, 0),
+            Rotation = 0,
+            Size = UDim2.new(1, 0, 1, 0),
+            Visible = true,
+            ClipsDescendants = false
+        }
+    )
+
+    local GradientFrame_UICorner =
+        Create(
+        "UICorner",
+        {
+            Parent = GradientFrame,
+            CornerRadius = UDim.new(0, GradientProperties.CornerRadius)
+        }
+    )
+
+    local GradientFrame_UIGradient =
+        Create(
+        "UIGradient",
+        {
+            Parent = GradientFrame,
+            Color = GradientProperties.Color,
+            Rotation = GradientProperties.Rotation,
+            Transparency = GradientProperties.Transparency
+        }
+    )
+end
+
+local NotificationContainer =
+    Create(
+    "Frame",
+    {
+        Parent = HorizonNotificationUI,
+        Name = "NotificationContainer",
+        AnchorPoint = Vector2.new(1, 0),
+        AutomaticSize = Enum.AutomaticSize.None,
+        BackgroundColor3 = ColorPalette.White,
+        BackgroundTransparency = 1,
+        BorderColor3 = ColorPalette.Black,
+        BorderSizePixel = 0,
+        Position = UDim2.new(1, -10, 0, 10),
+        Rotation = 0,
+        Size = UDim2.new(0, NotificationConfig.NotificationWidth, 1, -20),
+        Visible = true,
+        ClipsDescendants = false
+    }
+)
+
+local function GetTypeColor(NotificationType)
+    if NotificationType == "Success" then
+        return ColorPalette.Success
+    elseif NotificationType == "Warning" then
+        return ColorPalette.Warning
+    elseif NotificationType == "Error" then
+        return ColorPalette.Error
+    elseif NotificationType == "Info" then
+        return ColorPalette.Info
+    else
+        return ColorPalette.Primary
+    end
+end
+
+local function GetTypeIcon(NotificationType)
+    if NotificationType == "Success" then
+        return Storage.Icons.Success
+    elseif NotificationType == "Warning" then
+        return Storage.Icons.Warning
+    elseif NotificationType == "Error" then
+        return Storage.Icons.Error
+    elseif NotificationType == "Info" then
+        return Storage.Icons.Info
+    else
+        return Storage.Icons.Notification
+    end
+end
+
+local function UpdateNotificationPositions(animate)
+    if IsUpdatingPositions then return end
+    IsUpdatingPositions = true
+    
+    local yOffset = 0
+    for i, notification in ipairs(ActiveNotifications) do
+        if notification and notification.Parent then
+            local targetPos = UDim2.new(0, 0, 0, yOffset)
+            if animate ~= false then
+                CreateTween(notification, 0.2, Enum.EasingStyle.Quint, {Position = targetPos})
+            else
+                notification.Position = targetPos
+            end
+            yOffset = yOffset + notification.AbsoluteSize.Y + 10
+        end
+    end
+    
+    IsUpdatingPositions = false
+end
+
+local function RemoveNotification(NotificationFrame)
+    for i, notification in ipairs(ActiveNotifications) do
+        if notification == NotificationFrame then
+            table.remove(ActiveNotifications, i)
+            break
+        end
+    end
+
+    local FadeOutTween = CreateTween(
+        NotificationFrame,
+        NotificationConfig.AnimationDuration,
+        Enum.EasingStyle.Quint,
+        {
+            Size = UDim2.new(0, NotificationConfig.NotificationWidth, 0, 0),
+            BackgroundTransparency = 1
+        }
+    )
+
+    FadeOutTween.Completed:Connect(function()
+        NotificationFrame:Destroy()
+        UpdateNotificationPositions()
+    end)
+end
+
+local HorizonNotificationLibrary = {}
+
+function HorizonNotificationLibrary:Notify(NotificationProperties)
+    local Notification_Title = NotificationProperties.Title or "Notification"
+    local Notification_Message = NotificationProperties.Message or ""
+    local Notification_Type = NotificationProperties.Type or "Info" -- Success, Warning, Error, Info
+    local Notification_Duration = NotificationProperties.Duration or NotificationConfig.DefaultDuration
+    local Notification_Callback = NotificationProperties.Callback
+
+    if #ActiveNotifications >= NotificationConfig.MaxNotifications then
+        RemoveNotification(ActiveNotifications[1])
+    end
+
+    local TypeColor = GetTypeColor(Notification_Type)
+    local TypeIcon = GetTypeIcon(Notification_Type)
+
+    local NotificationFrame =
+        Create(
+        "Frame",
+        {
+            Parent = NotificationContainer,
+            Name = "NotificationFrame",
+            AnchorPoint = Vector2.new(0, 0),
+            AutomaticSize = Enum.AutomaticSize.Y,
+            BackgroundColor3 = ColorPalette.Dark,
+            BackgroundTransparency = 0,
+            BorderColor3 = ColorPalette.Black,
+            BorderSizePixel = 0,
+            Position = UDim2.new(1, 0, 0, 0),
+            Rotation = 0,
+            Size = UDim2.new(0, NotificationConfig.NotificationWidth, 0, 0),
+            Visible = true,
+            ClipsDescendants = true
+        }
+    )
+
+    table.insert(ActiveNotifications, NotificationFrame)
+
+    local lastHeight = 0
+    local sizeConnection
+    sizeConnection = NotificationFrame:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
+        local newHeight = NotificationFrame.AbsoluteSize.Y
+        if math.abs(newHeight - lastHeight) > 1 then
+            lastHeight = newHeight
+            UpdateNotificationPositions()
+        end
+    end)
+
+    local NotificationFrame_UICorner =
+        Create(
+        "UICorner",
+        {
+            Parent = NotificationFrame,
+            CornerRadius = UDim.new(0, 8)
+        }
+    )
+
+    local NotificationFrame_UIStroke =
+        Create(
+        "UIStroke",
+        {
+            Parent = NotificationFrame,
+            Color = ColorPalette.White,
+            Thickness = 1,
+            Transparency = 0.85
+        }
+    )
+
+    local NotificationShadowFolder =
+        Create(
+        "Folder",
+        {
+            Parent = NotificationFrame,
+            Name = "Shadow"
+        }
+    )
+
+    Shadow(
+        {
+            Parent = NotificationShadowFolder,
+            Thickness = 1,
+            Transparency = 0.95,
+            CornerRadius = 8
+        }
+    )
+
+    Shadow(
+        {
+            Parent = NotificationShadowFolder,
+            Thickness = 3,
+            Transparency = 0.95,
+            CornerRadius = 8
+        }
+    )
+
+    local NotificationGradientFolder =
+        Create(
+        "Folder",
+        {
+            Parent = NotificationFrame,
+            Name = "Gradient"
+        }
+    )
+
+    Gradient(
+        {
+            Parent = NotificationGradientFolder,
+            Color = ColorSequence.new {
+                ColorSequenceKeypoint.new(0.00, Color3.fromRGB(25, 24, 24)),
+                ColorSequenceKeypoint.new(1.00, Color3.fromRGB(87, 166, 199))
+            },
+            Rotation = 0,
+            Transparency = NumberSequence.new {
+                NumberSequenceKeypoint.new(0.00, 0.98),
+                NumberSequenceKeypoint.new(0.56, 1.00),
+                NumberSequenceKeypoint.new(1.00, 0.27)
+            },
+            CornerRadius = 8
+        }
+    )
+
+    local ContentFrame =
+        Create(
+        "Frame",
+        {
+            Parent = NotificationFrame,
+            Name = "ContentFrame",
+            AnchorPoint = Vector2.new(0, 0),
+            AutomaticSize = Enum.AutomaticSize.Y,
+            BackgroundColor3 = ColorPalette.White,
+            BackgroundTransparency = 1,
+            BorderColor3 = ColorPalette.Black,
+            BorderSizePixel = 0,
+            Position = UDim2.new(0, 0, 0, 0),
+            Rotation = 0,
+            Size = UDim2.new(1, 0, 0, 0),
+            Visible = true,
+            ClipsDescendants = false
+        }
+    )
+
+    local ContentFrame_UIPadding =
+        Create(
+        "UIPadding",
+        {
+            Parent = ContentFrame,
+            PaddingTop = UDim.new(0, 15),
+            PaddingBottom = UDim.new(0, 15),
+            PaddingLeft = UDim.new(0, 25),
+            PaddingRight = UDim.new(0, 25)
+        }
+    )
+
+    local ContentFrame_UIListLayout =
+        Create(
+        "UIListLayout",
+        {
+            Parent = ContentFrame,
+            FillDirection = Enum.FillDirection.Vertical,
+            HorizontalAlignment = Enum.HorizontalAlignment.Left,
+            SortOrder = Enum.SortOrder.LayoutOrder,
+            Padding = UDim.new(0, 2)
+        }
+    )
+
+    local TitleRowFrame =
+        Create(
+        "Frame",
+        {
+            Parent = ContentFrame,
+            Name = "TitleRowFrame",
+            LayoutOrder = 1,
+            AutomaticSize = Enum.AutomaticSize.Y,
+            BackgroundTransparency = 1,
+            Size = UDim2.new(1, 0, 0, 16),
+            ClipsDescendants = false
+        }
+    )
+
+    local TitleRow_UIListLayout =
+        Create(
+        "UIListLayout",
+        {
+            Parent = TitleRowFrame,
+            FillDirection = Enum.FillDirection.Horizontal,
+            HorizontalAlignment = Enum.HorizontalAlignment.Left,
+            VerticalAlignment = Enum.VerticalAlignment.Center,
+            SortOrder = Enum.SortOrder.LayoutOrder,
+            Padding = UDim.new(0, 6)
+        }
+    )
+
+    local CircularProgressBar =
+        Create(
+        "Frame",
+        {
+            Parent = TitleRowFrame,
+            Name = "CircularProgressBar",
+            LayoutOrder = 1,
+            BackgroundTransparency = 1,
+            BorderSizePixel = 0,
+            Size = UDim2.new(0, 15, 0, 15)
+        }
+    )
+
+    local Half2 =
+        Create(
+        "Frame",
+        {
+            Parent = CircularProgressBar,
+            Name = "Half2",
+            Size = UDim2.new(0.5, 0, 1, 0),
+            ClipsDescendants = true,
+            BackgroundTransparency = 1,
+            BorderSizePixel = 0
+        }
+    )
+
+    local ImageLabel_Half2 =
+        Create(
+        "ImageLabel",
+        {
+            Parent = Half2,
+            Size = UDim2.new(2, 0, 1, 0),
+            BackgroundTransparency = 1,
+            ImageColor3 = ColorPalette.White,
+            Image = "rbxassetid://2763450503"
+        }
+    )
+
+    local UIGradient_Half2 =
+        Create(
+        "UIGradient",
+        {
+            Parent = ImageLabel_Half2,
+            Transparency = NumberSequence.new({
+                NumberSequenceKeypoint.new(0, 0),
+                NumberSequenceKeypoint.new(0.499, 0),
+                NumberSequenceKeypoint.new(0.5, 1),
+                NumberSequenceKeypoint.new(0.501, 1),
+                NumberSequenceKeypoint.new(1, 1)
+            }),
+            Rotation = -180
+        }
+    )
+
+    local Half1 =
+        Create(
+        "Frame",
+        {
+            Parent = CircularProgressBar,
+            Name = "Half1",
+            Size = UDim2.new(0.5, 0, 1, 0),
+            Position = UDim2.new(0.5, 0, 0, 0),
+            ClipsDescendants = true,
+            BackgroundTransparency = 1,
+            BorderSizePixel = 0
+        }
+    )
+
+    local ImageLabel_Half1 =
+        Create(
+        "ImageLabel",
+        {
+            Parent = Half1,
+            Size = UDim2.new(2, 0, 1, 0),
+            Position = UDim2.new(-1, 0, 0, 0),
+            BackgroundTransparency = 1,
+            ImageColor3 = ColorPalette.White,
+            Image = "rbxassetid://2763450503"
+        }
+    )
+
+    local UIGradient_Half1 =
+        Create(
+        "UIGradient",
+        {
+            Parent = ImageLabel_Half1,
+            Transparency = NumberSequence.new({
+                NumberSequenceKeypoint.new(0, 0),
+                NumberSequenceKeypoint.new(0.499, 0),
+                NumberSequenceKeypoint.new(0.5, 1),
+                NumberSequenceKeypoint.new(0.501, 1),
+                NumberSequenceKeypoint.new(1, 1)
+            }),
+            Rotation = 0
+        }
+    )
+
+    local TitleLabel =
+        Create(
+        "TextLabel",
+        {
+            Parent = TitleRowFrame,
+            Name = "TitleLabel",
+            LayoutOrder = 2,
+            AutomaticSize = Enum.AutomaticSize.XY,
+            BackgroundTransparency = 1,
+            BorderSizePixel = 0,
+            Size = UDim2.new(0, 0, 0, 0),
+            Visible = true,
+            FontFace = Font.new("rbxasset://fonts/families/Montserrat.json", Enum.FontWeight.Bold),
+            Text = Notification_Title,
+            TextColor3 = ColorPalette.White,
+            TextSize = 16,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            TextYAlignment = Enum.TextYAlignment.Center,
+            TextTruncate = Enum.TextTruncate.AtEnd
+        }
+    )
+
+    local MessageLabel =
+        Create(
+        "TextLabel",
+        {
+            Parent = ContentFrame,
+            Name = "MessageLabel",
+            LayoutOrder = 2,
+            AutomaticSize = Enum.AutomaticSize.Y,
+            BackgroundTransparency = 1,
+            BorderSizePixel = 0,
+            Size = UDim2.new(1, 0, 0, 0),
+            Visible = true,
+            FontFace = Font.new("rbxasset://fonts/families/Montserrat.json", Enum.FontWeight.Medium),
+            Text = Notification_Message,
+            TextColor3 = ColorPalette.Gray,
+            TextSize = 12,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            TextYAlignment = Enum.TextYAlignment.Top,
+            TextWrapped = true,
+            TextTruncate = Enum.TextTruncate.AtEnd
+        }
+    )
+
+    local CloseButton =
+        Create(
+        "TextButton",
+        {
+            Parent = NotificationFrame,
+            Name = "CloseButton",
+            AnchorPoint = Vector2.new(1, 0),
+            AutomaticSize = Enum.AutomaticSize.None,
+            BackgroundColor3 = ColorPalette.White,
+            BackgroundTransparency = 1,
+            BorderColor3 = ColorPalette.Black,
+            BorderSizePixel = 0,
+            Position = UDim2.new(1, -5, 0, 5),
+            Rotation = 0,
+            Size = UDim2.new(0, 20, 0, 20),
+            Visible = true,
+            FontFace = Font.new("rbxasset://fonts/families/Montserrat.json", Enum.FontWeight.Bold),
+            Text = "×",
+            TextColor3 = ColorPalette.Gray,
+            TextSize = 18
+        }
+    )
+
+    CloseButton.MouseEnter:Connect(function()
+        CreateTween(
+            CloseButton,
+            0.2,
+            Enum.EasingStyle.Quint,
+            {
+                TextColor3 = ColorPalette.White
+            }
+        )
+    end)
+
+    CloseButton.MouseLeave:Connect(function()
+        CreateTween(
+            CloseButton,
+            0.2,
+            Enum.EasingStyle.Quint,
+            {
+                TextColor3 = ColorPalette.Gray
+            }
+        )
+    end)
+
+    CloseButton.MouseButton1Click:Connect(function()
+        RemoveNotification(NotificationFrame)
+        if Notification_Callback then
+            Notification_Callback("Closed")
+        end
+    end)
+
+    task.defer(function()
+        task.wait()
+        UpdateNotificationPositions(false)
+        NotificationFrame.Position = UDim2.new(1, 50, 0, NotificationFrame.Position.Y.Offset)
+        CreateTween(NotificationFrame, NotificationConfig.AnimationDuration, Enum.EasingStyle.Quint, {
+            Position = UDim2.new(0, 0, 0, NotificationFrame.Position.Y.Offset)
+        })
+    end)
+
+    task.spawn(function()
+        local Phase1Tween = CreateTween(
+            UIGradient_Half1,
+            Notification_Duration / 2,
+            Enum.EasingStyle.Linear,
+            {
+                Rotation = 180
+            }
+        )
+        Phase1Tween.Completed:Wait()
+        
+        local Phase2Tween = CreateTween(
+            UIGradient_Half2,
+            Notification_Duration / 2,
+            Enum.EasingStyle.Linear,
+            {
+                Rotation = 0
+            }
+        )
+    end)
+
+    task.delay(Notification_Duration, function()
+        if NotificationFrame and NotificationFrame.Parent then
+            RemoveNotification(NotificationFrame)
+            if Notification_Callback then
+                Notification_Callback("Expired")
+            end
+        end
+    end)
+
+    return {
+        Frame = NotificationFrame,
+        Close = function()
+            RemoveNotification(NotificationFrame)
+        end,
+        UpdateMessage = function(NewMessage)
+            MessageLabel.Text = NewMessage
+        end,
+        UpdateTitle = function(NewTitle)
+            TitleLabel.Text = NewTitle
+        end
+    }
+end
+
+function HorizonNotificationLibrary:Success(Title, Message, Duration)
+    return self:Notify({
+        Title = Title,
+        Message = Message,
+        Type = "Success",
+        Duration = Duration
+    })
+end
+
+function HorizonNotificationLibrary:Warning(Title, Message, Duration)
+    return self:Notify({
+        Title = Title,
+        Message = Message,
+        Type = "Warning",
+        Duration = Duration
+    })
+end
+
+function HorizonNotificationLibrary:Error(Title, Message, Duration)
+    return self:Notify({
+        Title = Title,
+        Message = Message,
+        Type = "Error",
+        Duration = Duration
+    })
+end
+
+function HorizonNotificationLibrary:Info(Title, Message, Duration)
+    return self:Notify({
+        Title = Title,
+        Message = Message,
+        Type = "Info",
+        Duration = Duration
+    })
+end
+
+function HorizonNotificationLibrary:ClearAll()
+    for i = #ActiveNotifications, 1, -1 do
+        RemoveNotification(ActiveNotifications[i])
+    end
+end
+
+-- Set Position Function
+function HorizonNotificationLibrary:SetPosition(Position)
+    NotificationConfig.Position = Position
+
+    if Position == "TopRight" then
+        NotificationContainer.AnchorPoint = Vector2.new(1, 0)
+        NotificationContainer.Position = UDim2.new(1, -10, 0, 10)
+    elseif Position == "TopLeft" then
+        NotificationContainer.AnchorPoint = Vector2.new(0, 0)
+        NotificationContainer.Position = UDim2.new(0, 10, 0, 10)
+    elseif Position == "BottomRight" then
+        NotificationContainer.AnchorPoint = Vector2.new(1, 1)
+        NotificationContainer.Position = UDim2.new(1, -10, 1, -10)
+    elseif Position == "BottomLeft" then
+        NotificationContainer.AnchorPoint = Vector2.new(0, 1)
+        NotificationContainer.Position = UDim2.new(0, 10, 1, -10)
+    end
+    
+    UpdateNotificationPositions()
+end
+
+function HorizonNotificationLibrary:SetMaxNotifications(Max)
+    NotificationConfig.MaxNotifications = Max
+end
+
+function HorizonNotificationLibrary:SetDefaultDuration(Duration)
+    NotificationConfig.DefaultDuration = Duration
+end
+
+function HorizonNotificationLibrary:Destroy()
+    HorizonNotificationUI:Destroy()
+end
+
+	Window.Notifications = HorizonNotificationLibrary
+
     return Window
 end
 return HorizonBarLibrary
